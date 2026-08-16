@@ -98,7 +98,7 @@ internal class Settings: NSStackView, Settings_v, NSTableViewDelegate, NSTableVi
         let tzColumn = NSTableColumn(identifier: tzColumnID)
         tzColumn.headerCell.title = localizedString("Time zone")
         tzColumn.headerCell.alignment = .center
-        tzColumn.width = 132
+        tzColumn.width = 160
         let calendarColumn = NSTableColumn(identifier: calendarColumnID)
         calendarColumn.headerCell.title = localizedString("Calendar")
         calendarColumn.headerCell.alignment = .center
@@ -223,7 +223,7 @@ internal class Settings: NSStackView, Settings_v, NSTableViewDelegate, NSTableVi
             select.sizeToFit()
             select.preferredEdge = .maxX
             select.translatesAutoresizingMaskIntoConstraints = false
-            select.widthAnchor.constraint(lessThanOrEqualToConstant: 132).isActive = true
+            select.widthAnchor.constraint(lessThanOrEqualToConstant: 160).isActive = true
             cell.addSubview(select)
         case calendarColumnID:
             let select: NSPopUpButton = selectView(action: #selector(self.toggleCalendar), items: Clock.calendars, selected: item.calendar)

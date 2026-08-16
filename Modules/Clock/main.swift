@@ -220,8 +220,8 @@ extension Clock {
             KeyValue_t(key: $0, value: (NSLocale.current as NSLocale).localizedString(forCalendarIdentifier: $0) ?? $0)
         }
     }
-    static var zones: [KeyValue_t] {
-        [
+    static let zones: [KeyValue_t] = {
+        let offsets: [KeyValue_t] = [
             KeyValue_t(key: "local", value: "Local"),
             KeyValue_t(key: "separator", value: "separator"),
             KeyValue_t(key: "-12", value: "UTC-12:00"),
@@ -261,6 +261,31 @@ extension Clock {
             KeyValue_t(key: "13", value: "UTC+13:00"),
             KeyValue_t(key: "14", value: "UTC+14:00"),
             KeyValue_t(key: "separator", value: "separator")
-        ] + TimeZone.knownTimeZoneIdentifiers.map { KeyValue_t(key: $0, value: $0) }
-    }
+        ]
+
+        // Label each zone by its localized city instead of the raw IANA identifier, so the list can be
+        // scanned and AppKit's type-select can find it: "America/Los_Angeles" was sorted under A and
+        // could only be reached by typing "america/".
+        let formatter = DateFormatter()
+        formatter.dateFormat = "VVV" // CLDR exemplar city, localized
+        let now = Date()
+
+        let cities: [(id: String, label: String)] = TimeZone.knownTimeZoneIdentifiers.compactMap { id in
+            guard let tz = TimeZone(identifier: id) else { return nil }
+            guard id.contains("/") else { // GMT is the only identifier without a region, so it has no city
+                return (id, tz.localizedName(for: .generic, locale: .current) ?? id)
+            }
+            formatter.timeZone = tz
+            return (id, formatter.string(from: now))
+        }
+
+        // Deprecated aliases share a city with the zone they point at (Europe/Kiev and Europe/Kyiv).
+        // Keep both, so a saved value always has a matching item, but qualify them to stay distinguishable.
+        var occurrences: [String: Int] = [:]
+        cities.forEach { occurrences[$0.label, default: 0] += 1 }
+
+        return offsets + cities.map {
+            KeyValue_t(key: $0.id, value: occurrences[$0.label] == 1 ? $0.label : "\($0.label) (\($0.id))")
+        }.sorted { $0.value.localizedStandardCompare($1.value) == .orderedAscending }
+    }()
 }
